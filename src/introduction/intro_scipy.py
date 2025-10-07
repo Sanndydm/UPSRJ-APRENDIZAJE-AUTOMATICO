@@ -1,4 +1,4 @@
-# ============================================================
+0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000# ============================================================
 # Politécnica de Santa Rosa
 #
 # Materia: Aprendizaje automático
@@ -10,6 +10,8 @@
 import numpy as np
 from scipy import linalg, stats, optimize, signal
 from typing import Callable
+
+import scipy
 ################################################################################
 # NOTE: Revisa la API de SciPy en https://docs.scipy.org/doc//scipy/index.html #
 ################################################################################
@@ -32,7 +34,7 @@ def solve_linear(A: np.ndarray, b: np.ndarray) -> np.ndarray:
     - np.ndarray
         Solución del sistema lineal como vector columna.
     """
-    solution = None
+    solution = scipy.linalg.solve(A, b)
     return solution
 
 # Ejercicio 2
@@ -52,8 +54,8 @@ def get_matrix_properties(mat: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     - tuple: (det, inv)
         Determinante y matriz inversa.
     """
-    det = None
-    inv = None
+    det = scipy.linalg.det(mat)
+    inv = scipy.linalg.inv(mat)
     return (det, inv)
 
 # Ejercicio 3
@@ -74,9 +76,9 @@ def get_statistics(arg: np.ndarray) -> tuple[float, float, float]:
     - tuple: (mean, tstd, mode)
         Media, desviación estándar y moda como flotantes.
     """
-    mean = None
-    tstd = None
-    mode = None
+    mean = np.mean(arg)
+    tstd = scipy.stats.tstd(arg)
+    mode = scipy.stats.mode(arg, keepdims=True).mode[0]
     return (mean, tstd, mode)
 
 # Ejercicio 4
@@ -95,7 +97,7 @@ def find_min(fun: Callable[[float], float]) -> optimize.OptimizeResult:
     - OptimizeResult
         Objeto con los resultados de la optimización.
     """
-    found_min = None
+    found_min = scipy.optimize.minimize_scalar(fun)
     return found_min
 
 # Ejercicio 5
@@ -116,7 +118,19 @@ def get_spectrum(signal: np.ndarray, sample_rate: float) -> tuple[np.ndarray, np
     - tuple: (frecuencias, magnitudes)
         Frecuencias positivas y sus magnitudes correspondientes.
     """
-    spectrum = None
+    # Aplicar la Transformada Rápida de Fourier (FFT)
+    fft_values = np.fft.fft(signal)
+
+    # Calcular las frecuencias correspondientes
+    frequencies = np.fft.fftfreq(len(signal), d=1/sample_rate)
+
+    # Seleccionar solo las frecuencias positivas
+    positive_mask = frequencies >= 0
+    frequencies_positive = frequencies[positive_mask]
+
+    # Calcular las magnitudes normalizadas
+    magnitudes = np.abs(fft_values[positive_mask]) * 2 / len(signal)
+    spectrum = (frequencies_positive, magnitudes)
     return spectrum
 
 # Ejercicio 6
@@ -124,7 +138,7 @@ def get_spectrum(signal: np.ndarray, sample_rate: float) -> tuple[np.ndarray, np
 # TODO: Crea una función "low_pass_filter" que aplique un filtro pasa bajas Butterworth sobre una señal con ruido. 
 # NOTE: https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.butter.html
 #       https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.filtfilt.html
-def low_pass_filter(signal: np.ndarray, fs: float, cutoff: float = 10.0, order: int = 4) -> np.ndarray:
+def low_pass_filter(signal_data: np.ndarray, fs: float, cutoff: float = 10.0, order: int = 4) -> np.ndarray:
     """
     Aplica un filtro pasa-bajas Butterworth a una señal con ruido.
 
@@ -142,5 +156,16 @@ def low_pass_filter(signal: np.ndarray, fs: float, cutoff: float = 10.0, order: 
     - np.ndarray
         Señal filtrada.
     """
-    clean_signal = None
+    # Frecuencia de Nyquist
+    nyquist = 0.5 * fs
+
+    # Frecuencia de corte normalizada
+    normal_cutoff = cutoff / nyquist
+
+    # Coeficientes del filtro Butterworth
+    b, a = signal.butter(order, normal_cutoff, btype='low', analog=False)
+
+    # Aplicar el filtro con filtfilt para evitar desfase
+    clean_signal = signal.filtfilt(b, a, signal_data)
+
     return clean_signal

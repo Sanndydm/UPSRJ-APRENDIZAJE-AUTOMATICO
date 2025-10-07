@@ -101,6 +101,7 @@ class DataSource:
         try:
             # NOTE: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.plot.scatter.html
             #       https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.scatter.html
+            plt.figure()
             plt.scatter(x, y)
             plt.xlabel(x_label)
             plt.ylabel(y_label)
