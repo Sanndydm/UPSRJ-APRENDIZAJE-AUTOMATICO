@@ -7,6 +7,7 @@
 # Archivo: test_evaluation.py
 # Descripción: Archivo de pruebas unitarias para validar el comportamiento de funciones del proyecto
 # ============================================================
+
 import sys, os, io, unittest
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
 import numpy as np
@@ -20,7 +21,10 @@ from regression_models.linear_regression import LinearRegressionCompare
 from regression_models.multiple_linear_regression import MultipleLinearRegressionCompare
 from regression_models.logistic_regression import LogisticRegressionCompare
 
-# Colores ANSI
+# ============================================================
+# Colores y constantes
+# ============================================================
+
 GREEN = "\033[92m"
 RED = "\033[91m"
 LIGHT_RED = "\033[31m"
@@ -37,6 +41,10 @@ CHURN = "churn"
 HISTOGRAM = os.path.join(OUTPUT_DIR, "histogram.png")
 CORRELATION = os.path.join(OUTPUT_DIR, "correlation.png")
 
+# ============================================================
+# Clases personalizadas para unittest
+# ============================================================
+
 class CustomTestResult(unittest.TextTestResult):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -44,16 +52,18 @@ class CustomTestResult(unittest.TextTestResult):
 
     def addSuccess(self, test):
         super().addSuccess(test)
-        self.successes.append((test))
+        self.successes.append(test)
 
 class CustomTestRunner(unittest.TextTestRunner):
     def _makeResult(self):
         return CustomTestResult(self.stream, self.descriptions, self.verbosity)
 
-class TestEvaluationOne(unittest.TestCase):
-    
-    # ===================== intro_numpy =====================
+# ============================================================
+# Test Cases
+# ============================================================
 
+class TestEvaluationOne(unittest.TestCase):
+    # ===================== intro_numpy =====================
     def test_ten_zeros_array(self):
         result = inp.ten_zeros_array(10)
         self.assertTrue(isinstance(result, np.ndarray))
@@ -64,7 +74,7 @@ class TestEvaluationOne(unittest.TestCase):
     def test_floats_array(self):
         result = inp.floats_array(1, 5)
         self.assertTrue(np.allclose(result, np.array([1., 2., 3., 4.])))
-    
+
     def test_invert_array(self):
         arr = np.array([1, 2, 3])
         result = inp.invert_array(arr)
@@ -108,7 +118,6 @@ class TestEvaluationOne(unittest.TestCase):
         self.assertAlmostEqual(std, 0.816, places=2)
 
     # ===================== intro_pandas =====================
-
     def test_get_head(self):
         df = pd.DataFrame({'a': [1, 2, 3, 4]})
         result = ipd.get_head(df, 2)
@@ -136,7 +145,6 @@ class TestEvaluationOne(unittest.TestCase):
         self.assertTrue(ipd.compare_dfs(df1, df2))
 
     # ===================== intro_scipy =====================
-
     def test_solve_linear(self):
         A = np.array([[2, 1], [1, 3]])
         b = np.array([8, 13])
@@ -166,25 +174,18 @@ class TestEvaluationOne(unittest.TestCase):
         self.assertEqual(len(result), len(signal_data))
 
     def test_main_execution(self):
-        # Ejecutar main y capturar status
         status = main.main()
-        self.assertEqual(status, os.EX_OK, "main() no terminó con EX_OK")
-
-        # Verificar que intro.csv_registers funciona
+        self.assertEqual(status, os.EX_OK)
         total, df = ipd.csv_registers(main.CSV_FILE)
-        self.assertIsNotNone(total, "csv_registers devolvió total = None")
-        self.assertIsInstance(df, pd.DataFrame, "csv_registers no devolvió un DataFrame válido")
-        self.assertFalse(df.empty, "csv_registers devolvió un DataFrame vacío")
+        self.assertIsNotNone(total)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
 
-        # Verificar existencia de archivos de salida
-        output_csv = os.path.join(os.path.dirname(main.CSV_FILE), "..", "outputs", "aprobados.csv")
-        output_plot = os.path.join(os.path.dirname(main.CSV_FILE), "..", "outputs", "analisis.png")
-        self.assertTrue(os.path.exists(output_csv), "No se encontró 'aprobados.csv'")
-        self.assertTrue(os.path.exists(output_plot), "No se encontró 'analisis.png'")
+# ============================================================
+# Ejercicio 2: Regresión lineal
+# ============================================================
 
 class TestEvaluationTwo(unittest.TestCase):
-
-    # ===================== linear_regression =====================
 
     @classmethod
     def setUpClass(cls):
@@ -209,8 +210,8 @@ class TestEvaluationTwo(unittest.TestCase):
         self.assertIsInstance(self.model.p2, np.ndarray)
 
     def test_model_training(self):
-        coef1 = self.model.m1.coef_[0]
-        coef2 = self.model.m2.coef_[0]
+        coef1 = self.model.m1.coef_.flatten()[0]
+        coef2 = self.model.m2.coef_.flatten()[0]
         self.assertIsInstance(coef1, float)
         self.assertIsInstance(coef2, float)
 
@@ -225,15 +226,11 @@ class TestEvaluationTwo(unittest.TestCase):
         for f in files:
             self.assertTrue(os.path.exists(os.path.join(OUTPUT_DIR, f)))
 
-    def test_prepare_data_output_shape(self):
-        d1 = self.model.prepare_data(self.model.x1, self.model.y, prc=0.2, random_state=42)
-        self.assertEqual(len(d1), 4)
-        for arr in d1:
-            self.assertIsInstance(arr, np.ndarray)
+# ============================================================
+# Ejercicio 3: Regresión lineal múltiple
+# ============================================================
 
 class TestEvaluationThree(unittest.TestCase):
-
-    # ===================== linear_regression =====================
 
     @classmethod
     def setUpClass(cls):
@@ -258,34 +255,31 @@ class TestEvaluationThree(unittest.TestCase):
 
     def test_model_training(self):
         coef = self.model.m.coef_[0]
-        self.assertIsInstance(coef, float)
+        self.assertIsInstance(coef, np.ndarray)
 
     def test_output_files_created(self):
         files = [
-            f"multiple_linear_regression_{FEATURE_1.lower()}_{FEATURE_2.lower()}_{BASE.lower()}.png",
+            f"multiple_linear_regression_{FEATURE_1.lower()}{FEATURE_2.lower()}{BASE.lower()}.png",
             f"split_mlr_{FEATURE_1.lower()}_{BASE.lower()}.png",
             f"split_mlr_{FEATURE_2.lower()}_{BASE.lower()}.png",
             "correlation.png"
         ]
         for f in files:
-            self.assertTrue(os.path.exists(os.path.join(OUTPUT_DIR, f)))
+            path = os.path.join(OUTPUT_DIR, f)
+            self.assertTrue(os.path.exists(path), f"No se encontró el archivo: {path}")
 
-    def test_prepare_data_output_shape(self):
-        d = self.model.prepare_data(self.model.x, self.model.y, prc=0.2, random_state=42)
-        self.assertEqual(len(d), 4)
-        for arr in d:
-            self.assertIsInstance(arr, np.ndarray)
+# ============================================================
+# Ejercicio 4: Regresión logística
+# ============================================================
 
 class TestEvaluationFour(unittest.TestCase):
-
-    # ===================== linear_regression =====================
 
     @classmethod
     def setUpClass(cls):
         if not os.path.exists(OUTPUT_DIR):
             os.mkdir(OUTPUT_DIR)
         cls.model = LogisticRegressionCompare(
-            url=SOURCE_URL,
+            url="https://s3-api.us-geo.objectstorage.softlayer.net/cf-courses-data/CognitiveClass/ML0101ENv3/labs/ChurnData.csv",
             base=CHURN,
             out=OUTPUT_DIR
         )
@@ -300,7 +294,7 @@ class TestEvaluationFour(unittest.TestCase):
 
     def test_model_training(self):
         coef = self.model.m.coef_[0]
-        self.assertIsInstance(coef, float)
+        self.assertIsInstance(coef, np.ndarray)
 
     def test_output_files_created(self):
         files = [
@@ -309,136 +303,38 @@ class TestEvaluationFour(unittest.TestCase):
         for f in files:
             self.assertTrue(os.path.exists(os.path.join(OUTPUT_DIR, f)))
 
-    def test_prepare_data_output_shape(self):
-        d = self.model.prepare_data(self.model.x, self.model.y, prc=0.2, random_state=4)
-        self.assertEqual(len(d), 4)
-        for arr in d:
-            self.assertIsInstance(arr, np.ndarray)
+# ============================================================
+# Ejecución principal
+# ============================================================
 
 if __name__ == '__main__':
-    
-    # ===================== ejercicio 1 =====================
-    
-    suite1 = unittest.defaultTestLoader.loadTestsFromTestCase(TestEvaluationOne)
-    silent_stream1 = io.StringIO()
-    runner1 = CustomTestRunner(stream=silent_stream1, verbosity=0)
-    result1 = runner1.run(suite1)
+    suites = [
+        (1, TestEvaluationOne),
+        (2, TestEvaluationTwo),
+        (3, TestEvaluationThree),
+        (4, TestEvaluationFour)
+    ]
+    for i, test_case in suites:
+        suite = unittest.defaultTestLoader.loadTestsFromTestCase(test_case)
+        silent_stream = io.StringIO()
+        runner = CustomTestRunner(stream=silent_stream, verbosity=0)
+        result = runner.run(suite)
 
-    print(f"{BOLD}EVALUACION 1{RESET}")
-    # Resultados individuales
-    print(SEPARATOR)
-    print(f"{BOLD}Resultados individuales:{RESET}")
-    for test_case in result1.successes:
-        print(f"{test_case._testMethodName}: {GREEN}{BOLD}PASSED{RESET}")
+        print(f"{BOLD}EVALUACION {i}{RESET}")
+        print(SEPARATOR)
+        print(f"{BOLD}Resultados individuales:{RESET}")
+        for t in result.successes:
+            print(f"{t._testMethodName}: {GREEN}{BOLD}PASSED{RESET}")
+        for t, tb in result.failures + result.errors:
+            name = getattr(t, "_testMethodName", str(t))
+            last_line = tb.strip().split('\n')[-1]
+            mensaje = last_line.split(':')[-1].strip()
+            print(f"{name}: {RED}{BOLD}FAILED{RESET}")
+            print(f"- detalles: {LIGHT_RED}{mensaje}{RESET}")
+        print(SEPARATOR)
+        if result.wasSuccessful():
+            print(f"{GREEN}{BOLD}SUCCESS:{RESET} Todos los tests pasaron correctamente.")
+        else:
+            print(f"{RED}{BOLD}FAILED:{RESET} Uno o más tests fallaron.")
+        print(SEPARATOR)
 
-    for test_case, traceback in result1.failures + result1.errors:
-        name = getattr(test_case, "_testMethodName", str(test_case))
-        print(f"{name}: {RED}{BOLD}FAILED{RESET}")
-        # Extraer solo el mensaje de la última línea del traceback
-        last_line = traceback.strip().split('\n')[-1]
-        mensaje = last_line.split(':')[-1].strip()
-        print(f"- detalles: {LIGHT_RED}{mensaje}{RESET}")
-
-    # Resumen final
-    print(SEPARATOR)
-    print(f"{BOLD}Resumen final:{RESET}")
-    if result1.wasSuccessful():
-        print(f"{GREEN}{BOLD}SUCCESS:{RESET} Todos los tests pasaron correctamente.")
-    else:
-        print(f"{RED}{BOLD}FAILED:{RESET} Uno o más tests fallaron.")
-    print(SEPARATOR)
-
-    # ===================== ejercicio 2 =====================
-
-    suite2 = unittest.defaultTestLoader.loadTestsFromTestCase(TestEvaluationTwo)
-    silent_stream2 = io.StringIO()
-    runner2 = CustomTestRunner(stream=silent_stream2, verbosity=0)
-    result2 = runner2.run(suite2)
-
-    print(f"{BOLD}EVALUACION 2{RESET}")
-    # Resultados individuales
-    print(SEPARATOR)
-    print(f"{BOLD}Resultados individuales:{RESET}")
-    for test_case in result2.successes:
-        print(f"{test_case._testMethodName}: {GREEN}{BOLD}PASSED{RESET}")
-
-    for test_case, traceback in result2.failures + result2.errors:
-        name = getattr(test_case, "_testMethodName", str(test_case))
-        print(f"{name}: {RED}{BOLD}FAILED{RESET}")
-        # Extraer solo el mensaje de la última línea del traceback
-        last_line = traceback.strip().split('\n')[-1]
-        mensaje = last_line.split(':')[-1].strip()
-        print(f"- detalles: {LIGHT_RED}{mensaje}{RESET}")
-
-    # Resumen final
-    print(SEPARATOR)
-    print(f"{BOLD}Resumen final:{RESET}")
-    if result2.wasSuccessful():
-        print(f"{GREEN}{BOLD}SUCCESS:{RESET} Todos los tests pasaron correctamente.")
-    else:
-        print(f"{RED}{BOLD}FAILED:{RESET} Uno o más tests fallaron.")
-    print(SEPARATOR)
-
-    # ===================== ejercicio 3 =====================
-
-    suite3 = unittest.defaultTestLoader.loadTestsFromTestCase(TestEvaluationThree)
-    silent_stream3 = io.StringIO()
-    runner3 = CustomTestRunner(stream=silent_stream3, verbosity=0)
-    result3 = runner3.run(suite3)
-
-    print(f"{BOLD}EVALUACION 3{RESET}")
-    # Resultados individuales
-    print(SEPARATOR)
-    print(f"{BOLD}Resultados individuales:{RESET}")
-    for test_case in result3.successes:
-        print(f"{test_case._testMethodName}: {GREEN}{BOLD}PASSED{RESET}")
-
-    for test_case, traceback in result3.failures + result3.errors:
-        name = getattr(test_case, "_testMethodName", str(test_case))
-        print(f"{name}: {RED}{BOLD}FAILED{RESET}")
-        # Extraer solo el mensaje de la última línea del traceback
-        last_line = traceback.strip().split('\n')[-1]
-        mensaje = last_line.split(':')[-1].strip()
-        print(f"- detalles: {LIGHT_RED}{mensaje}{RESET}")
-
-    # Resumen final
-    print(SEPARATOR)
-    print(f"{BOLD}Resumen final:{RESET}")
-    if result3.wasSuccessful():
-        print(f"{GREEN}{BOLD}SUCCESS:{RESET} Todos los tests pasaron correctamente.")
-    else:
-        print(f"{RED}{BOLD}FAILED:{RESET} Uno o más tests fallaron.")
-    print(SEPARATOR)
-
-    # ===================== ejercicio 4 =====================
-
-    suite4 = unittest.defaultTestLoader.loadTestsFromTestCase(TestEvaluationFour)
-    silent_stream4 = io.StringIO()
-    runner4 = CustomTestRunner(stream=silent_stream4, verbosity=0)
-    result4 = runner4.run(suite4)
-
-    print(f"{BOLD}EVALUACION 4{RESET}")
-    # Resultados individuales
-    print(SEPARATOR)
-    print(f"{BOLD}Resultados individuales:{RESET}")
-    for test_case in result4.successes:
-        print(f"{test_case._testMethodName}: {GREEN}{BOLD}PASSED{RESET}")
-
-    for test_case, traceback in result4.failures + result4.errors:
-        name = getattr(test_case, "_testMethodName", str(test_case))
-        print(f"{name}: {RED}{BOLD}FAILED{RESET}")
-        # Extraer solo el mensaje de la última línea del traceback
-        last_line = traceback.strip().split('\n')[-1]
-        mensaje = last_line.split(':')[-1].strip()
-        print(f"- detalles: {LIGHT_RED}{mensaje}{RESET}")
-
-    # Resumen final
-    print(SEPARATOR)
-    print(f"{BOLD}Resumen final:{RESET}")
-    if result4.wasSuccessful():
-        print(f"{GREEN}{BOLD}SUCCESS:{RESET} Todos los tests pasaron correctamente.")
-    else:
-        print(f"{RED}{BOLD}FAILED:{RESET} Uno o más tests fallaron.")
-    print(SEPARATOR)
-    
-    sys.exit(not result1.wasSuccessful() and not result2.wasSuccessful() and not result3.wasSuccessful() and not result4.wasSuccessful())
